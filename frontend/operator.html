@@ -16,7 +16,6 @@
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-body); color: var(--text-main); margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; transition: 0.3s; box-sizing: border-box; }
         .container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 24px; }
         
-        /* Header Layout */
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
         .header-left { display: flex; align-items: center; gap: 12px; }
         .menu-toggle-btn { background: none; border: none; color: var(--text-main); font-size: 26px; cursor: pointer; padding: 0; }
@@ -28,7 +27,6 @@
         .line-badge { font-size: 20px; font-weight: 900; color: #2563eb; margin: 0; }
         .online-dot { font-size: 12px; color: #10b981; font-weight: 700; margin: 4px 0 0 0; }
 
-        /* ☰ SIDEBAR SLIDE BAR UNTUK OPERATOR */
         .sidebar-drawer { position: fixed; top: 0; left: -280px; width: 260px; height: 100vh; background-color: var(--sidebar-bg); border-right: 1px solid var(--border); box-shadow: 20px 0 50px rgba(0,0,0,0.3); z-index: 999; display: flex; flex-direction: column; padding: 30px 20px; box-sizing: border-box; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .sidebar-drawer.open { left: 0; }
         .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 998; display: none; }
@@ -37,7 +35,6 @@
         .sidebar-menu-item { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); padding: 14px; border-radius: 12px; font-weight: 700; font-size: 13px; text-align: left; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; }
         .sidebar-menu-item:active { transform: scale(0.98); }
 
-        /* Request Selector Grid */
         .section-title { font-size: 16px; font-weight: 800; text-align: center; margin: 0; }
         .section-sub { font-size: 13px; color: var(--text-sub); text-align: center; margin: -15px 0 5px 0; font-weight: 600; }
         .grid-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
@@ -53,18 +50,19 @@
         .card-orange { color: #d97706; border-color: rgba(217, 119, 6, 0.2); }
         .card-orange:hover { background: rgba(217, 119, 6, 0.05); border-color: #d97706; }
 
-        /* Request Status & History */
         .status-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
         .status-title { font-size: 14px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
         .empty-log { font-size: 13px; color: var(--text-sub); font-weight: 600; text-align: center; padding: 15px 0; }
         
         .log-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+        .log-item.bisa-diklik { cursor: pointer; transition: 0.2s; }
+        .log-item.bisa-diklik:hover { background: rgba(16, 185, 129, 0.05); padding-left: 5px; padding-right: 5px; border-radius: 8px; }
         .log-item:last-child { border-bottom: none; padding-bottom: 0; }
         .log-left { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; }
         .log-left svg { width: 18px; height: 18px; fill: currentColor; }
         .badge-status { font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; }
         .status-wait { background: rgba(217, 119, 6, 0.1); color: #d97706; }
-        .status-deliv { background: rgba(16, 185, 129, 0.1); color: #10b981; animation: blink 1s infinite alternate; }
+        .status-deliv { background: #10b981; color: white; animation: blink 1s infinite alternate; }
         .status-done { background: rgba(100, 116, 139, 0.1); color: var(--text-sub); }
         @keyframes blink { from { opacity: 0.6; } to { opacity: 1; } }
     </style>
@@ -122,7 +120,7 @@
     </div>
 
     <div class="status-box">
-        <div class="status-title">Request Aktif Line Ini</div>
+        <div class="status-title">Request Aktif (Klik Status "DI LIFT" Untuk Selesai)</div>
         <div id="boxRequestAktif">
             <div class="empty-log">🟢 Jalur Aman. Tidak ada request menggantung.</div>
         </div>
@@ -137,15 +135,12 @@
 </div>
 
 <script>
-    // Validasi Sesi Resmi
     const sessionUser = JSON.parse(localStorage.getItem('dhs_user'));
     if (!sessionUser) { window.location.href = 'login.html'; }
 
-    // Pasang Identitas Ke Layar
     document.getElementById('lblLineName').innerText = sessionUser.line;
     document.getElementById('lblLantaiName').innerText = `Lantai ${sessionUser.lantai} • Online`;
 
-    // SVG Icons
     const icons = {
         trolley: `<svg viewBox="0 0 24 24"><path d="M19 16c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1H7c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12zM6 20c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm12 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>`,
         box: `<svg viewBox="0 0 24 24"><path d="M12 21.35l-8-4.63V7.28l8 4.63v9.44zm1-9.44l8-4.63v9.44l-8 4.63v-9.44zM12 2.65l7.65 4.42L12 11.49 4.35 7.07 12 2.65z"/></svg>`
@@ -154,7 +149,6 @@
     document.getElementById('iconTroliKecil').innerHTML = icons.trolley;
     document.getElementById('iconFgFull').innerHTML = icons.box;
 
-    // Kendali Sidebar Drawer
     function bukaSidebar() {
         document.getElementById('sidebarDrawer').classList.add('open');
         document.getElementById('sidebarOverlay').classList.add('show');
@@ -168,7 +162,6 @@
         const currentTheme = document.documentElement.getAttribute('data-theme');
         const targetTheme = currentTheme === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', targetTheme);
-        document.getElementById('sidebarThemeText').innerText = targetTheme === 'dark' ? '☀️ Switch Light Mode' : '🌙 Switch Dark Mode';
         tutupSidebar();
     }
 
@@ -177,7 +170,6 @@
         window.location.href = 'login.html';
     }
 
-    // Mengirim Request Baru ke Backend API
     function kirimRequest(jenis) {
         fetch('https://dhs-paragoncorp.up.railway.app/api/request/baru', {
             method: 'POST',
@@ -187,10 +179,28 @@
         .then(res => res.json())
         .then(resData => {
             if(resData.success) {
-                tambahKeRiwayatLokal(resData.data);
+                // Biarkan WebSocket meng-update list aktif secara realtime
             }
         })
-        .catch(err => alert("Koneksi mesin terputus! Gagal memanggil bantuan logistik."));
+        .catch(err => alert("Gagal memanggil bantuan logistik."));
+    }
+
+    // Fungsi Konfirmasi Terima untuk Menyelesaikan Tugas
+    function konfirmasiSelesaiTugas(id, jenisMedia) {
+        if(confirm(`Konfirmasi bahwa ${jenisMedia.replace('_',' ')} sudah diterima di Line?`)) {
+            fetch('https://dhs-paragoncorp.up.railway.app/api/request/selesai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            })
+            .then(res => res.json())
+            .then(resData => {
+                if(resData.success) {
+                    tambahKeRiwayatLokal({ jenisMedia: jenisMedia });
+                }
+            })
+            .catch(err => alert("Gagal mengirim konfirmasi terima ke server."));
+        }
     }
 
     function getMediaLabel(jenis) {
@@ -199,7 +209,6 @@
         return { text: 'Tarik FG Full', icon: icons.box };
     }
 
-    // Management Riwayat Log Lokal untuk Pemantauan Mandiri Operator
     function tambahKeRiwayatLokal(item) {
         let riwayat = JSON.parse(localStorage.getItem(`dhs_log_${sessionUser.username}`)) || [];
         riwayat.unshift(item);
@@ -226,13 +235,10 @@
         });
     }
 
-    // Menggunakan AJAX Polling pendek sebagai fallback operator system sync (Sudah diganti ke Railway)
     setInterval(() => {
-        fetch('https://dhs-paragoncorp.up.railway.app/api/request/baru', { method: 'GET' })
-        .catch(() => {});
+        fetch('https://dhs-paragoncorp.up.railway.app/api/request/baru', { method: 'GET' }).catch(() => {});
     }, 5000);
 
-    // Buka koneksi WebSocket resmi ke Server Railway
     const scriptIo = document.createElement('script');
     scriptIo.src = "https://dhs-paragoncorp.up.railway.app/socket.io/socket.io.js";
     scriptIo.onload = () => {
@@ -253,11 +259,20 @@
                 const media = getMediaLabel(item.jenisMedia);
                 let badgeClass = 'status-wait';
                 let txtStatus = 'WAITING';
-                if(item.status === 'DELIVERED') { badgeClass = 'status-deliv'; txtStatus = 'DI LIFT'; }
+                let clickAction = '';
+                let extraClass = '';
+
+                if(item.status === 'DELIVERED') { 
+                    badgeClass = 'status-deliv'; 
+                    txtStatus = 'DI LIFT'; 
+                    extraClass = 'bisa-diklik';
+                    // Pasang trigger klik jika status sudah DI LIFT
+                    clickAction = `onclick="konfirmasiSelesaiTugas('${item.id}', '${item.jenisMedia}')"`;
+                }
                 if(item.jenisMedia === 'FG_FULL' && item.status === 'WAITING') { txtStatus = 'WAIT KFG'; }
 
                 boxAktif.innerHTML += `
-                    <div class="log-item">
+                    <div class="log-item ${extraClass}" ${clickAction}>
                         <div class="log-left">${media.icon} <span>${media.text}</span></div>
                         <span class="badge-status ${badgeClass}">${txtStatus}</span>
                     </div>`;
