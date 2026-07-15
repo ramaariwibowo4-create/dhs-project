@@ -179,7 +179,7 @@
 
     // Mengirim Request Baru ke Backend API
     function kirimRequest(jenis) {
-        fetch('http://dhs-paragoncorp.up.railway.app/api/request/baru', {
+        fetch('https://dhs-paragoncorp.up.railway.app/api/request/baru', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ line: sessionUser.line, lantai: sessionUser.lantai, jenisMedia: jenis })
@@ -229,7 +229,7 @@
 
     // Ambil Data Live Antrean dari Sisi Server
     function ambilDataRealtime() {
-        fetch('http://dhs-paragoncorp.up.railway.app/api/auth/login', { // Fake hitting trigger data sync update via long-polling backup
+        fetch('https://dhs-paragoncorp.up.railway.app/api/auth/login', { // Fake hitting trigger data sync update via long-polling backup
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: sessionUser.username, password: '---' }) // Just triggers data refresh or let websocket handles it
@@ -244,7 +244,7 @@
 
     // Buka koneksi WebSocket ringan khusus mendengarkan update status hapus/selesai dari Gudang KFG
     const scriptIo = document.createElement('script');
-    scriptIo.src = "http://dhs-paragoncorp.up.railway.app/socket.io/socket.io.js";
+    scriptIo.src = "https://dhs-paragoncorp.up.railway.app/socket.io/socket.io.js";
     scriptIo.onload = () => {
         const socket = io('dhs-paragoncorp.up.railway.app');
         socket.on('DATA_ANTREAN_UPDATE', (data) => {
