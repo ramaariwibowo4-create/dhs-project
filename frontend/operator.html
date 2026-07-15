@@ -28,7 +28,7 @@
         .line-badge { font-size: 20px; font-weight: 900; color: #2563eb; margin: 0; }
         .online-dot { font-size: 12px; color: #10b981; font-weight: 700; margin: 4px 0 0 0; }
 
-        /* ☰ 🔥 SIDEBAR SLIDE BAR UNTUK OPERATOR */
+        /* ☰ SIDEBAR SLIDE BAR UNTUK OPERATOR */
         .sidebar-drawer { position: fixed; top: 0; left: -280px; width: 260px; height: 100vh; background-color: var(--sidebar-bg); border-right: 1px solid var(--border); box-shadow: 20px 0 50px rgba(0,0,0,0.3); z-index: 999; display: flex; flex-direction: column; padding: 30px 20px; box-sizing: border-box; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .sidebar-drawer.open { left: 0; }
         .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 998; display: none; }
@@ -188,7 +188,6 @@
         .then(resData => {
             if(resData.success) {
                 tambahKeRiwayatLokal(resData.data);
-                ambilDataRealtime();
             }
         })
         .catch(err => alert("Koneksi mesin terputus! Gagal memanggil bantuan logistik."));
@@ -204,7 +203,7 @@
     function tambahKeRiwayatLokal(item) {
         let riwayat = JSON.parse(localStorage.getItem(`dhs_log_${sessionUser.username}`)) || [];
         riwayat.unshift(item);
-        if(riwayat.length > 5) riwayat.pop(); // Batasi 5 baris terakhir biar ga penuh
+        if(riwayat.length > 5) riwayat.pop();
         localStorage.setItem(`dhs_log_${sessionUser.username}`, JSON.stringify(riwayat));
         renderRiwayatLokal();
     }
@@ -227,26 +226,18 @@
         });
     }
 
-    // Ambil Data Live Antrean dari Sisi Server
-    function ambilDataRealtime() {
-        fetch('https://dhs-paragoncorp.up.railway.app/api/auth/login', { // Fake hitting trigger data sync update via long-polling backup
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: sessionUser.username, password: '---' }) // Just triggers data refresh or let websocket handles it
-        }).catch(() => {});
-    }
-
-    // Menggunakan AJAX Polling pendek sebagai fallback operator system sync
+    // Menggunakan AJAX Polling pendek sebagai fallback operator system sync (Sudah diganti ke Railway)
     setInterval(() => {
-        fetch('http://localhost:3000/api/request/baru', { method: 'GET' }) // dummy verification check or websocket listeners below
+        fetch('https://dhs-paragoncorp.up.railway.app/api/request/baru', { method: 'GET' })
         .catch(() => {});
     }, 5000);
 
-    // Buka koneksi WebSocket ringan khusus mendengarkan update status hapus/selesai dari Gudang KFG
+    // Buka koneksi WebSocket resmi ke Server Railway
     const scriptIo = document.createElement('script');
     scriptIo.src = "https://dhs-paragoncorp.up.railway.app/socket.io/socket.io.js";
     scriptIo.onload = () => {
-        const socket = io('dhs-paragoncorp.up.railway.app');
+        const socket = io('https://dhs-paragoncorp.up.railway.app');
+        
         socket.on('DATA_ANTREAN_UPDATE', (data) => {
             const boxAktif = document.getElementById('boxRequestAktif');
             const gabung = [...data.troli, ...data.fg];

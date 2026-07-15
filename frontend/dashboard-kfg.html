@@ -86,20 +86,18 @@
         .nav-btn { background: none; border: none; color: var(--text-sub); font-weight: 800; font-size: 14px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; }
         .nav-btn.active { color: #38bdf8; }
 
-        /* ✨ POP-UP MODERASI MEWAH & PREMIUM (GLASSMORPHISM & GLOW EFFECT) */
+        /* ✨ POP-UP MODERASI MEWAH & PREMIUM */
         .overlay-popup { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(2, 6, 23, 0.85); backdrop-filter: blur(25px); z-index: 999; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .overlay-popup.show { opacity: 1; pointer-events: auto; }
         
         .popup-box { position: relative; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border: 2px solid rgba(59, 130, 246, 0.4); box-shadow: 0 0 60px rgba(59, 130, 246, 0.25), inset 0 1px 1px rgba(255,255,255,0.1); border-radius: 36px; padding: 50px 40px; text-align: center; color: white; width: 90%; max-width: 500px; transform: scale(0.85); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
         .overlay-popup.show .popup-box { transform: scale(1); }
         
-        /* Tema Warna Khusus untuk Kebutuhan Outbound (FG) */
         .popup-fg { border-color: rgba(245, 158, 11, 0.5) !important; box-shadow: 0 0 60px rgba(245, 158, 11, 0.25), inset 0 1px 1px rgba(255,255,255,0.1) !important; }
         
         .btn-close-popup { position: absolute; top: 20px; right: 25px; font-size: 36px; color: #64748b; cursor: pointer; background: none; border: none; font-weight: 300; transition: 0.2s; }
         .btn-close-popup:hover { color: #ef4444; transform: rotate(90deg); }
         
-        /* Container Icon Pro Logistik */
         .popup-icon-wrapper { width: 100px; height: 100px; margin: 0 auto 20px auto; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 28px; display: flex; align-items: center; justify-content: center; padding: 22px; box-sizing: border-box; color: #3b82f6; }
         .popup-fg .popup-icon-wrapper { color: #f59e0b; }
         .popup-icon-wrapper svg { width: 100%; height: 100%; fill: currentColor; }
@@ -122,8 +120,7 @@
 <div id="popupOverlay" class="overlay-popup">
     <div class="popup-box" id="popupBox">
         <button class="btn-close-popup" onclick="tutupPopupManual()">×</button>
-        <div class="popup-icon-wrapper" id="popIconContainer">
-            </div>
+        <div class="popup-icon-wrapper" id="popIconContainer"></div>
         <div class="popup-badge-label" id="popLabel">REQUEST INBOUND</div>
         <h2 id="popFloorLine" style="font-size: 52px; font-weight: 900; margin: 0px 0 8px 0; letter-spacing: -1px; line-height: 1;">LINE --</h2>
         <div id="popFloorText" style="font-size: 16px; font-weight: 700; color: #38bdf8; margin-bottom: 20px;">Lantai --</div>
@@ -184,12 +181,12 @@
 </div>
 
 <script>
-    const socket = io('http://dhs-paragoncorp.up.railway.app');
+    // 🛠️ Sinkronisasi Ke Jalur Enkripsi Aman HTTPS
+    const socket = io('https://dhs-paragoncorp.up.railway.app');
     const activeTimers = {};
     let audioCtx = null, alarmInterval = null;
+    let popupTimeout = null;
 
-
-    // ✨ SVG INLINE LOGISTIK BERSIH ANTI ES KRIM 🍦
     const svgIcons = {
         box: `<svg viewBox="0 0 24 24"><path d="M12 21.35l-8-4.63V7.28l8 4.63v9.44zm1-9.44l8-4.63v9.44l-8 4.63v-9.44zM12 2.65l7.65 4.42L12 11.49 4.35 7.07 12 2.65z"/></svg>`,
         trolley: `<svg viewBox="0 0 24 24"><path d="M19 16c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1H7c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12zM6 20c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm12 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>`
@@ -217,7 +214,6 @@
             fetch('https://dhs-paragoncorp.up.railway.app/api/request/reset-all', { method: 'POST' });
         }
     }
-    function tutupPopupManual() { document.getElementById('popupOverlay').classList.remove('show'); alarmMati(); }
 
     function startTimer(id, waktuEpoch) {
         if(activeTimers[id]) clearInterval(activeTimers[id]);
@@ -246,6 +242,13 @@
     }
     function alarmMati() { if(alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; } }
 
+    function tutupPopupManual() { 
+        document.getElementById('popupOverlay').classList.remove('show'); 
+        alarmMati(); 
+        if (popupTimeout) { clearTimeout(popupTimeout); popupTimeout = null; }
+    }
+
+    // 📣 Listener Utama: Memicu alarm dan pop-up saat operator line menekan tombol
     socket.on('ANTREAN_BARU_MASUK', (data) => {
         const pBox = document.getElementById('popupBox');
         const visual = getMediaVisual(data.jenisMedia);
@@ -264,10 +267,18 @@
             pBox.className = "popup-box"; 
             document.getElementById('popLabel').innerText = "📦 REQUEST PASOKAN TROLI"; 
         }
+        
         document.getElementById('popupOverlay').classList.add('show');
         alarmBunyi();
+
+        if (popupTimeout) clearTimeout(popupTimeout);
+        popupTimeout = setTimeout(() => {
+            tutupPopupManual();
+            console.log("⏱️ Pop-up TV otomatis ditutup setelah 30 detik idle.");
+        }, 30000); 
     });
     
+    // 📊 Listener Sinkronisasi Data Realtime
     socket.on('DATA_ANTREAN_UPDATE', (data) => {
         const cTroli = document.getElementById('containerTroli'); const cFG = document.getElementById('containerFG');
         
@@ -298,45 +309,6 @@
         document.getElementById('countTroli').innerText = `${data.troli.length} Aktif`;
         document.getElementById('countFG').innerText = `${data.fg.length} Aktif`;
     });
-
-    let popupTimeout = null; // Menyimpan ID timer pop-up aktif
-
-    socket.on('ANTREAN_BARU_MASUK', (data) => {
-        const pBox = document.getElementById('popupBox');
-        const visual = getMediaVisual(data.jenisMedia);
-        
-        document.getElementById('popIconContainer').innerHTML = visual.svg;
-        document.getElementById('popFloorLine').innerText = data.line;
-        document.getElementById('popFloorText').innerText = `Zona Operasional: Lantai ${data.lantai}`;
-        document.getElementById('popFloorText').style.color = data.lantai == 2 ? '#a855f7' : '#38bdf8';
-        document.getElementById('popMedia').innerText = visual.text;
-        document.getElementById('popTime').innerText = `Waktu Kirim: ${data.waktu} WIB`;
-
-        if(data.jenisMedia === 'FG_FULL') { 
-            pBox.className = "popup-box popup-fg"; 
-            document.getElementById('popLabel').innerText = "🚨 TARGET TARIK FG"; 
-        } else { 
-            pBox.className = "popup-box"; 
-            document.getElementById('popLabel').innerText = "📦 REQUEST PASOKAN TROLI"; 
-        }
-        
-        document.getElementById('popupOverlay').classList.add('show');
-        alarmBunyi();
-
-        // ⏳ TIMER PINTAR 30 DETIK: Bersihkan sisa timer lama dulu agar tidak bentrok
-        if (popupTimeout) clearTimeout(popupTimeout);
-        popupTimeout = setTimeout(() => {
-            tutupPopupManual();
-            console.log("⏱️ Pop-up TV otomatis ditutup setelah 30 detik idle.");
-        }, 30000); 
-    });
-
-    // Pastikan fungsi tutup manual juga ikut membersihkan sisa detikan timer
-    function tutupPopupManual() { 
-        document.getElementById('popupOverlay').classList.remove('show'); 
-        alarmMati(); 
-        if (popupTimeout) { clearTimeout(popupTimeout); popupTimeout = null; }
-    }
 </script>
 </body>
 </html>
