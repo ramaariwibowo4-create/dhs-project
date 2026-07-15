@@ -179,7 +179,7 @@
 
     // Mengirim Request Baru ke Backend API
     function kirimRequest(jenis) {
-        fetch('http://localhost:3000/api/request/baru', {
+        fetch('http://dhs-paragoncorp.up.railway.app/api/request/baru', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ line: sessionUser.line, lantai: sessionUser.lantai, jenisMedia: jenis })
@@ -229,7 +229,7 @@
 
     // Ambil Data Live Antrean dari Sisi Server
     function ambilDataRealtime() {
-        fetch('http://localhost:3000/api/auth/login', { // Fake hitting trigger data sync update via long-polling backup
+        fetch('http://dhs-paragoncorp.up.railway.app/api/auth/login', { // Fake hitting trigger data sync update via long-polling backup
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username: sessionUser.username, password: '---' }) // Just triggers data refresh or let websocket handles it
@@ -244,9 +244,9 @@
 
     // Buka koneksi WebSocket ringan khusus mendengarkan update status hapus/selesai dari Gudang KFG
     const scriptIo = document.createElement('script');
-    scriptIo.src = "http://localhost:3000/socket.io/socket.io.js";
+    scriptIo.src = "http://dhs-paragoncorp.up.railway.app/socket.io/socket.io.js";
     scriptIo.onload = () => {
-        const socket = io('http://localhost:3000');
+        const socket = io('dhs-paragoncorp.up.railway.app');
         socket.on('DATA_ANTREAN_UPDATE', (data) => {
             const boxAktif = document.getElementById('boxRequestAktif');
             const gabung = [...data.troli, ...data.fg];

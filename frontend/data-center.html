@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DHS v1.0 • Data Center & Riwayat</title>
-    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+    <script src="http://dhs-paragoncorp.up.railway.app/socket.io/socket.io.js"></script>
     <style>
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
@@ -147,7 +147,7 @@
 </div>
 
 <script>
-    const socket = io('http://localhost:3000');
+    const socket = io('http://dhs-paragoncorp.up.railway.app');
     let lokalHistory = [];
 
     function getMediaText(jenisMedia) {
