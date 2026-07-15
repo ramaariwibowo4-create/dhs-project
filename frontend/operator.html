@@ -55,16 +55,34 @@
         .empty-log { font-size: 13px; color: var(--text-sub); font-weight: 600; text-align: center; padding: 15px 0; }
         
         .log-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
-        .log-item.bisa-diklik { cursor: pointer; transition: 0.2s; }
-        .log-item.bisa-diklik:hover { background: rgba(16, 185, 129, 0.05); padding-left: 5px; padding-right: 5px; border-radius: 8px; }
         .log-item:last-child { border-bottom: none; padding-bottom: 0; }
         .log-left { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; }
         .log-left svg { width: 18px; height: 18px; fill: currentColor; }
-        .badge-status { font-size: 10px; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; }
+        
+        .log-right-action { display: flex; align-items: center; gap: 8px; }
+        .badge-status { font-size: 10px; font-weight: 800; padding: 5px 9px; border-radius: 6px; text-transform: uppercase; }
         .status-wait { background: rgba(217, 119, 6, 0.1); color: #d97706; }
-        .status-deliv { background: #10b981; color: white; animation: blink 1s infinite alternate; }
+        .status-deliv { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
         .status-done { background: rgba(100, 116, 139, 0.1); color: var(--text-sub); }
-        @keyframes blink { from { opacity: 0.6; } to { opacity: 1; } }
+        
+        .btn-confirm-terima { 
+            background: #10b981; 
+            color: white; 
+            border: none; 
+            font-size: 11px; 
+            font-weight: 800; 
+            padding: 6px 12px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            display: flex; 
+            align-items: center; 
+            gap: 4px; 
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+            transition: 0.2s; 
+        }
+        .btn-confirm-terima:hover { background: #059669; }
+        .btn-confirm-terima:active { transform: scale(0.95); }
+        .btn-confirm-terima svg { width: 12px; height: 12px; fill: white; }
     </style>
 </head>
 <body>
@@ -72,13 +90,10 @@
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="tutupSidebar()"></div>
 <div class="sidebar-drawer" id="sidebarDrawer">
     <div class="sidebar-header">⚙️ DHS Operator Menu</div>
-    
     <button class="sidebar-menu-item" onclick="toggleTheme()">
         <span>🌓</span> <span id="sidebarThemeText">Switch Light Mode</span>
     </button>
-    
     <div style="flex-grow:1;"></div>
-    
     <button class="sidebar-menu-item" style="background:#ef4444; color:white; border:none;" onclick="logoutSistem()">
         <span>🚪</span> Log Out Platform
     </button>
@@ -120,7 +135,7 @@
     </div>
 
     <div class="status-box">
-        <div class="status-title">Request Aktif (Klik Status "DI LIFT" Untuk Selesai)</div>
+        <div class="status-title">Request Aktif Line Ini</div>
         <div id="boxRequestAktif">
             <div class="empty-log">🟢 Jalur Aman. Tidak ada request menggantung.</div>
         </div>
@@ -141,9 +156,12 @@
     document.getElementById('lblLineName').innerText = sessionUser.line;
     document.getElementById('lblLantaiName').innerText = `Lantai ${sessionUser.lantai} • Online`;
 
+    let adakahTroliAktif = false;
+
     const icons = {
         trolley: `<svg viewBox="0 0 24 24"><path d="M19 16c.55 0 1-.45 1-1V5c0-.55-.45-1-1-1H7c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12zM6 20c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm12 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z"/></svg>`,
-        box: `<svg viewBox="0 0 24 24"><path d="M12 21.35l-8-4.63V7.28l8 4.63v9.44zm1-9.44l8-4.63v9.44l-8 4.63v-9.44zM12 2.65l7.65 4.42L12 11.49 4.35 7.07 12 2.65z"/></svg>`
+        box: `<svg viewBox="0 0 24 24"><path d="M12 21.35l-8-4.63V7.28l8 4.63v9.44zm1-9.44l8-4.63v9.44l-8 4.63v-9.44zM12 2.65l7.65 4.42L12 11.49 4.35 7.07 12 2.65z"/></svg>`,
+        check: `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`
     };
     document.getElementById('iconTroliBesar').innerHTML = icons.trolley;
     document.getElementById('iconTroliKecil').innerHTML = icons.trolley;
@@ -171,36 +189,34 @@
     }
 
     function kirimRequest(jenis) {
+        if ((jenis === 'TROLI_BESAR' || jenis === 'TROLI_KECIL') && adakahTroliAktif) {
+            alert("❌ Request Ditolak! Masih ada antrean TROLI yang aktif / berjalan.");
+            return;
+        }
+
         fetch('https://dhs-paragoncorp.up.railway.app/api/request/baru', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ line: sessionUser.line, lantai: sessionUser.lantai, jenisMedia: jenis })
         })
         .then(res => res.json())
-        .then(resData => {
-            if(resData.success) {
-                // Biarkan WebSocket meng-update list aktif secara realtime
-            }
-        })
         .catch(err => alert("Gagal memanggil bantuan logistik."));
     }
 
-    // Fungsi Konfirmasi Terima untuk Menyelesaikan Tugas
-    function konfirmasiSelesaiTugas(id, jenisMedia) {
-        if(confirm(`Konfirmasi bahwa ${jenisMedia.replace('_',' ')} sudah diterima di Line?`)) {
-            fetch('https://dhs-paragoncorp.up.railway.app/api/request/selesai', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id: id })
-            })
-            .then(res => res.json())
-            .then(resData => {
-                if(resData.success) {
-                    tambahKeRiwayatLokal({ jenisMedia: jenisMedia });
-                }
-            })
-            .catch(err => alert("Gagal mengirim konfirmasi terima ke server."));
-        }
+    // ⚡ FIX: Hapus alert confirm bawaan browser agar sat-set langsung kirim
+    window.eksekusiTerimaFisik = function(id, textLabel) {
+        fetch('https://dhs-paragoncorp.up.railway.app/api/request/selesai', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id })
+        })
+        .then(res => res.json())
+        .then(resData => {
+            if(resData.success) {
+                tambahKeRiwayatLokal({ jenisMedia: textLabel.toUpperCase().replace(' ', '_') });
+            }
+        })
+        .catch(err => alert("Gagal mengirim konfirmasi ke server."));
     }
 
     function getMediaLabel(jenis) {
@@ -249,6 +265,8 @@
             const gabung = [...data.troli, ...data.fg];
             const filtered = gabung.filter(item => item.line === sessionUser.line);
             
+            adakahTroliAktif = filtered.some(item => item.jenisMedia === 'TROLI_BESAR' || item.jenisMedia === 'TROLI_KECIL');
+            
             if(filtered.length === 0) {
                 boxAktif.innerHTML = `<div class="empty-log">🟢 Jalur Aman. Tidak ada request menggantung.</div>`;
                 return;
@@ -259,27 +277,28 @@
                 const media = getMediaLabel(item.jenisMedia);
                 let badgeClass = 'status-wait';
                 let txtStatus = 'WAITING';
-                let clickAction = '';
-                let extraClass = '';
+                let tombolHtml = '';
 
                 if(item.status === 'DELIVERED') { 
                     badgeClass = 'status-deliv'; 
                     txtStatus = 'DI LIFT'; 
-                    extraClass = 'bisa-diklik';
-                    // Pasang trigger klik jika status sudah DI LIFT
-                    clickAction = `onclick="konfirmasiSelesaiTugas('${item.id}', '${item.jenisMedia}')"`;
+                    tombolHtml = `<button class="btn-confirm-terima" onclick="window.eksekusiTerimaFisik('${item.id}', '${media.text}')">${icons.check} Confirm Terima</button>`;
                 }
                 if(item.jenisMedia === 'FG_FULL' && item.status === 'WAITING') { txtStatus = 'WAIT KFG'; }
 
                 boxAktif.innerHTML += `
-                    <div class="log-item ${extraClass}" ${clickAction}>
+                    <div class="log-item">
                         <div class="log-left">${media.icon} <span>${media.text}</span></div>
-                        <span class="badge-status ${badgeClass}">${txtStatus}</span>
+                        <div class="log-right-action">
+                            <span class="badge-status ${badgeClass}">${txtStatus}</span>
+                            ${tombolHtml}
+                        </div>
                     </div>`;
             });
         });
 
         socket.on('FORCE_RESET_SCREEN', () => {
+            adakahTroliAktif = false;
             document.getElementById('boxRequestAktif').innerHTML = `<div class="empty-log">🟢 Jalur Aman. Tidak ada request menggantung.</div>`;
         });
     };
