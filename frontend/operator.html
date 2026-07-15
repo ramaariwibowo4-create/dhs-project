@@ -81,8 +81,21 @@
             transition: 0.2s; 
         }
         .btn-confirm-terima:hover { background: #059669; }
-        .btn-confirm-terima:active { transform: scale(0.95); }
         .btn-confirm-terima svg { width: 12px; height: 12px; fill: white; }
+
+        /* Tombol Instan khusus Lantai 1 */
+        .btn-instan-lnt1 { 
+            background: #64748b; 
+            color: white; 
+            border: none; 
+            font-size: 11px; 
+            font-weight: 800; 
+            padding: 6px 12px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            transition: 0.2s; 
+        }
+        .btn-instan-lnt1:hover { background: #475569; }
     </style>
 </head>
 <body>
@@ -90,9 +103,7 @@
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="tutupSidebar()"></div>
 <div class="sidebar-drawer" id="sidebarDrawer">
     <div class="sidebar-header">⚙️ DHS Operator Menu</div>
-    <button class="sidebar-menu-item" onclick="toggleTheme()">
-        <span>🌓</span> <span id="sidebarThemeText">Switch Light Mode</span>
-    </button>
+    <button class="sidebar-menu-item" onclick="toggleTheme()">🌓 Switch Light Mode</button>
     <div style="flex-grow:1;"></div>
     <button class="sidebar-menu-item" style="background:#ef4444; color:white; border:none;" onclick="logoutSistem()">
         <span>🚪</span> Log Out Platform
@@ -117,35 +128,21 @@
     <div style="display:flex; flex-direction:column; gap:15px;">
         <h4 class="section-title">Buat Request Baru</h4>
         <p class="section-sub">Pilih media penunjang line</p>
-        
         <div class="grid-selector">
-            <div class="select-card card-blue" onclick="kirimRequest('TROLI_BESAR')">
-                <div id="iconTroliBesar"></div>
-                <span>Troli Besar</span>
-            </div>
-            <div class="select-card card-green" onclick="kirimRequest('TROLI_KECIL')">
-                <div id="iconTroliKecil"></div>
-                <span>Troli Kecil</span>
-            </div>
-            <div class="select-card card-orange" onclick="kirimRequest('FG_FULL')">
-                <div id="iconFgFull"></div>
-                <span>Tarik FG Full</span>
-            </div>
+            <div class="select-card card-blue" onclick="kirimRequest('TROLI_BESAR')"><div id="iconTroliBesar"></div><span>Troli Besar</span></div>
+            <div class="select-card card-green" onclick="kirimRequest('TROLI_KECIL')"><div id="iconTroliKecil"></div><span>Troli Kecil</span></div>
+            <div class="select-card card-orange" onclick="kirimRequest('FG_FULL')"><div id="iconFgFull"></div><span>Tarik FG Full</span></div>
         </div>
     </div>
 
     <div class="status-box">
-        <div class="status-title">Request Aktif Line Ini</div>
-        <div id="boxRequestAktif">
-            <div class="empty-log">🟢 Jalur Aman. Tidak ada request menggantung.</div>
-        </div>
+        <div class="status-title" id="lblStatusTitleText">Request Aktif Line Ini</div>
+        <div id="boxRequestAktif"><div class="empty-log">🟢 Jalur Aman. Tidak ada request menggantung.</div></div>
     </div>
 
     <div class="status-box">
         <div class="status-title">Riwayat Aktivitas Terakhir</div>
-        <div id="boxRiwayatLokal">
-            <div class="empty-log">Belum ada aktivitas terekam hari ini.</div>
-        </div>
+        <div id="boxRiwayatLokal"><div class="empty-log">Belum ada aktivitas terekam hari ini.</div></div>
     </div>
 </div>
 
@@ -155,6 +152,12 @@
 
     document.getElementById('lblLineName').innerText = sessionUser.line;
     document.getElementById('lblLantaiName').innerText = `Lantai ${sessionUser.lantai} • Online`;
+
+    if(sessionUser.lantai == 1) {
+        document.getElementById('lblStatusTitleText').innerText = 'Request Aktif (Lantai 1 • Klik Bebas Selesai)';
+    } else {
+        document.getElementById('lblStatusTitleText').innerText = 'Request Aktif (Klik "Confirm Terima" Di Lift)';
+    }
 
     let adakahTroliAktif = false;
 
@@ -167,43 +170,28 @@
     document.getElementById('iconTroliKecil').innerHTML = icons.trolley;
     document.getElementById('iconFgFull').innerHTML = icons.box;
 
-    function bukaSidebar() {
-        document.getElementById('sidebarDrawer').classList.add('open');
-        document.getElementById('sidebarOverlay').classList.add('show');
-    }
-    function tutupSidebar() {
-        document.getElementById('sidebarDrawer').classList.remove('open');
-        document.getElementById('sidebarOverlay').classList.remove('show');
-    }
-
+    function bukaSidebar() { document.getElementById('sidebarDrawer').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('show'); }
+    function tutupSidebar() { document.getElementById('sidebarDrawer').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
     function toggleTheme() {
         const currentTheme = document.documentElement.getAttribute('data-theme');
         const targetTheme = currentTheme === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', targetTheme);
         tutupSidebar();
     }
-
-    function logoutSistem() {
-        localStorage.clear();
-        window.location.href = 'login.html';
-    }
+    function logoutSistem() { localStorage.clear(); window.location.href = 'login.html'; }
 
     function kirimRequest(jenis) {
         if ((jenis === 'TROLI_BESAR' || jenis === 'TROLI_KECIL') && adakahTroliAktif) {
             alert("❌ Request Ditolak! Masih ada antrean TROLI yang aktif / berjalan.");
             return;
         }
-
         fetch('https://dhs-paragoncorp.up.railway.app/api/request/baru', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ line: sessionUser.line, lantai: sessionUser.lantai, jenisMedia: jenis })
-        })
-        .then(res => res.json())
-        .catch(err => alert("Gagal memanggil bantuan logistik."));
+        }).catch(err => alert("Gagal memanggil bantuan logistik."));
     }
 
-    // ⚡ FIX: Hapus alert confirm bawaan browser agar sat-set langsung kirim
     window.eksekusiTerimaFisik = function(id, textLabel) {
         fetch('https://dhs-paragoncorp.up.railway.app/api/request/selesai', {
             method: 'POST',
@@ -215,8 +203,7 @@
             if(resData.success) {
                 tambahKeRiwayatLokal({ jenisMedia: textLabel.toUpperCase().replace(' ', '_') });
             }
-        })
-        .catch(err => alert("Gagal mengirim konfirmasi ke server."));
+        }).catch(() => {});
     }
 
     function getMediaLabel(jenis) {
@@ -236,24 +223,15 @@
     function renderRiwayatLokal() {
         const box = document.getElementById('boxRiwayatLokal');
         const riwayat = JSON.parse(localStorage.getItem(`dhs_log_${sessionUser.username}`)) || [];
-        if(riwayat.length === 0) {
-            box.innerHTML = `<div class="empty-log">Belum ada aktivitas terekam hari ini.</div>`;
-            return;
-        }
+        if(riwayat.length === 0) return;
         box.innerHTML = '';
         riwayat.forEach(item => {
             const media = getMediaLabel(item.jenisMedia);
-            box.innerHTML += `
-                <div class="log-item">
-                    <div class="log-left">${media.icon} <span>${media.text}</span></div>
-                    <span class="badge-status status-done">COMPLETED</span>
-                </div>`;
+            box.innerHTML += `<div class="log-item"><div class="log-left">${media.icon} <span>${media.text}</span></div><span class="badge-status status-done">COMPLETED</span></div>`;
         });
     }
 
-    setInterval(() => {
-        fetch('https://dhs-paragoncorp.up.railway.app/api/request/baru', { method: 'GET' }).catch(() => {});
-    }, 5000);
+    setInterval(() => { fetch('https://dhs-paragoncorp.up.railway.app/api/request/baru', { method: 'GET' }).catch(() => {}); }, 5000);
 
     const scriptIo = document.createElement('script');
     scriptIo.src = "https://dhs-paragoncorp.up.railway.app/socket.io/socket.io.js";
@@ -279,11 +257,18 @@
                 let txtStatus = 'WAITING';
                 let tombolHtml = '';
 
-                if(item.status === 'DELIVERED') { 
-                    badgeClass = 'status-deliv'; 
-                    txtStatus = 'DI LIFT'; 
-                    tombolHtml = `<button class="btn-confirm-terima" onclick="window.eksekusiTerimaFisik('${item.id}', '${media.text}')">${icons.check} Confirm Terima</button>`;
+                if(item.status === 'DELIVERED') { badgeClass = 'status-deliv'; txtStatus = 'DI LIFT'; }
+
+                // 🔥 LOGIKA BARU LANTAI 1 BISA SELESAI INSTAN KAPAN SAJA
+                if (sessionUser.lantai == 1) {
+                    tombolHtml = `<button class="btn-instan-lnt1" onclick="window.eksekusiTerimaFisik('${item.id}', '${media.text}')">✓ Selesai</button>`;
+                } else {
+                    // Lantai 2: Tombol hijau baru muncul pas statusnya DI LIFT
+                    if(item.status === 'DELIVERED') { 
+                        tombolHtml = `<button class="btn-confirm-terima" onclick="window.eksekusiTerimaFisik('${item.id}', '${media.text}')">${icons.check} Confirm Terima</button>`;
+                    }
                 }
+                
                 if(item.jenisMedia === 'FG_FULL' && item.status === 'WAITING') { txtStatus = 'WAIT KFG'; }
 
                 boxAktif.innerHTML += `
