@@ -29,8 +29,10 @@
         .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 998; display: none; }
         .sidebar-overlay.show { display: block; }
         
-        .sidebar-header { font-size: 11px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 25px; }
+        .sidebar-header { font-size: 11px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 15px; margin-top: 15px; }
         .sidebar-menu-item { background: var(--bg-card); border: 1px solid var(--border); color: var(--text-main); padding: 14px; border-radius: 12px; font-weight: 700; font-size: 13px; text-align: left; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box; }
+        .btn-milkrun-in { border-left: 4px solid #3b82f6; }
+        .btn-milkrun-out { border-left: 4px solid #10b981; }
         .btn-danger-item { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #ef4444; }
 
         .tab-content { display: none; }
@@ -84,6 +86,17 @@
         
         .btn-close-popup { font-size: 22px; color: #64748b; cursor: pointer; background: none; border: none; padding: 0 5px; font-weight: 400; line-height: 1; }
         .btn-close-popup:hover { color: #ef4444; }
+
+        /* 📝 MODAL FORM MILKRUN STYLING */
+        .modal-milkrun { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(2,6,23,0.7); backdrop-filter: blur(8px); z-index: 999; display: none; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        .modal-milkrun.show { display: flex; }
+        .form-box { background: var(--bg-card); border: 1px solid var(--border); width: 100%; max-width: 380px; border-radius: 20px; padding: 25px 20px; box-sizing: border-box; position: relative; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+        .form-box h3 { margin: 0 0 20px 0; font-size: 18px; font-weight: 800; color: #38bdf8; display: flex; align-items: center; gap: 8px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; }
+        .form-group label { font-size: 11px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input, .form-group select { background: rgba(15, 23, 42, 0.5); border: 1px solid var(--border); color: var(--text-main); padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; outline: none; }
+        .form-group input:focus, .form-group select:focus { border-color: #3b82f6; }
+        .btn-submit-form { width: 100%; color: white; border: none; padding: 14px; font-weight: 800; font-size: 14px; border-radius: 12px; cursor: pointer; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -93,10 +106,55 @@
     <div class="sidebar-header">⚙️ DHS Control Panel</div>
     <button class="sidebar-menu-item" onclick="toggleTheme()"><span id="sidebarThemeText">🌓 Switch Light Mode</span></button>
     <button class="sidebar-menu-item btn-danger-item" onclick="clearDataMonitor()">🧹 Clear Data Monitor</button>
+    
+    <div class="sidebar-header">🚛 Modul Milkrun</div>
+    <button class="sidebar-menu-item btn-milkrun-in" onclick="bukaFormMilkrun('in')">📥 Form Check-In Mobil</button>
+    <button class="sidebar-menu-item btn-milkrun-out" onclick="bukaFormMilkrun('out')">📤 Form Check-Out Mobil</button>
+   
+    <div class="sidebar-header">🕒 Shift Control</div>
+    <button class="sidebar-menu-item" onclick="gantiShift('SHIFT 1')">☀️ SHIFT 1</button>
+    <button class="sidebar-menu-item" onclick="gantiShift('SHIFT 2')">🌙 SHIFT 2</button>
+    <button class="sidebar-menu-item" onclick="gantiShift('SHIFT 3')">🌑 SHIFT 3</button>
+    
     <div style="flex-grow:1;"></div>
     <button class="sidebar-menu-item btn-danger-item" style="background:#ef4444; color:white; border:none;" onclick="logoutSistem()"><span>🚪</span> Log Out Platform</button>
 </div>
 
+<div id="modalMilkrun" class="modal-milkrun">
+    <div class="form-box">
+        <button class="btn-close-popup" style="position:absolute; top:15px; right:15px;" onclick="tutupFormMilkrun()">×</button>
+        <h3 id="formTitle">🚛 MILKRUN CHECK-IN</h3>
+        <form id="milkrunForm" onsubmit="submitFormMilkrun(event)">
+            <input type="hidden" id="formType" value="in">
+            <div class="form-group">
+                <label>Pilih Ritase Ke-</label>
+                <select id="formRitase" required>
+                    <option value="Ritase 1">Ritase 1 (08:00)</option>
+                    <option value="Ritase 2">Ritase 2 (10:30)</option>
+                    <option value="Ritase 3">Ritase 3 (13:00)</option>
+                    <option value="Ritase 4">Ritase 4 (15:30)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Nama Driver & Vendor</label>
+                <input type="text" id="formDriver" placeholder="Contoh: Budi - Vendor Logistik" required>
+            </div>
+            <div class="form-group">
+                <label>Plat Nomor Mobil</label>
+                <input type="text" id="formPlat" placeholder="Contoh: B 9123 XZ" required>
+            </div>
+            <div class="form-group" id="groupTroliIn">
+                <label>Jumlah Troli Kosong (Diturunkan)</label>
+                <input type="number" id="formTroliKosong" min="0" value="0">
+            </div>
+            <div class="form-group" id="groupTroliOut" style="display:none;">
+                <label>Jumlah Troli Isi FG (Dinaikkan)</label>
+                <input type="number" id="formTroliIsi" min="0" value="0">
+            </div>
+            <button type="submit" id="btnSubmitForm" class="btn-submit-form btn-blue">SIMPAN DATA CHECK-IN</button>
+        </form>
+    </div>
+</div>
 <div id="popupOverlay" class="overlay-popup">
     <div class="popup-box" id="pBox">
         <div class="popup-main-content">
@@ -150,13 +208,71 @@
 
     function bukaSidebar() { document.getElementById('sidebarDrawer').classList.add('open'); document.getElementById('sidebarOverlay').classList.add('show'); }
     function tutupSidebar() { document.getElementById('sidebarDrawer').classList.remove('open'); document.getElementById('sidebarOverlay').classList.remove('show'); }
-    function toggleTheme() {
-        const currentTheme = document.documentElement.getAttribute('data-theme');
-        const targetTheme = currentTheme === 'dark' ? 'light' : 'dark';
-        document.documentElement.setAttribute('data-theme', targetTheme);
-        document.getElementById('sidebarThemeText').innerText = targetTheme === 'light' ? '🌙 Switch Dark Mode' : '☀️ Switch Light Mode';
+    
+    // ⚙️ LOGIKA FORM DI SIDEBAR TABLET
+    function bukaFormMilkrun(tipe) {
         tutupSidebar();
+        document.getElementById('formType').value = tipe;
+        document.getElementById('modalMilkrun').classList.add('show');
+        
+        if(tipe === 'in') {
+            document.getElementById('formTitle').innerText = "📥 MILKRUN CHECK-IN";
+            document.getElementById('formTitle').style.color = "#38bdf8";
+            document.getElementById('groupTroliIn').style.display = "flex";
+            document.getElementById('groupTroliOut').style.display = "none";
+            document.getElementById('btnSubmitForm').className = "btn-submit-form btn-blue";
+            document.getElementById('btnSubmitForm').innerText = "SIMPAN DATA CHECK-IN";
+        } else {
+            document.getElementById('formTitle').innerText = "📤 MILKRUN CHECK-OUT";
+            document.getElementById('formTitle').style.color = "#10b981";
+            document.getElementById('groupTroliIn').style.display = "none";
+            document.getElementById('groupTroliOut').style.display = "flex";
+            document.getElementById('btnSubmitForm').className = "btn-submit-form btn-green";
+            document.getElementById('btnSubmitForm').innerText = "PROSES CHECK-OUT MOBIL";
+        }
     }
+    function tutupFormMilkrun() { document.getElementById('modalMilkrun').classList.remove('show'); document.getElementById('milkrunForm').reset(); }
+    
+    function submitFormMilkrun(e) {
+        e.preventDefault();
+        const tipe = document.getElementById('formType').value;
+        const payload = {
+            ritase: document.getElementById('formRitase').value,
+            driver: document.getElementById('formDriver').value,
+            plat: document.getElementById('formPlat').value,
+            troliKosong: document.getElementById('formTroliKosong').value,
+            troliIsi: document.getElementById('formTroliIsi').value,
+            waktu: new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})
+        };
+        
+        // Kirim data via Socket ke Server agar langsung ter-render di TV Monitoring
+        socket.emit(tipe === 'in' ? 'MILKRUN_CHECKIN_SUBMIT' : 'MILKRUN_CHECKOUT_SUBMIT', payload);
+        alert(`Berhasil Kirim Data Milkrun ${tipe === 'in' ? 'Check-In' : 'Check-Out'}!`);
+        tutupFormMilkrun();
+    }
+    // 1. Fungsi Ganti Shift (Diletakkan di luar fungsi lainnya)
+function gantiShift(shiftName) {
+    console.log("Mengirim perintah ganti shift ke:", shiftName);
+    
+    // Pastikan socket emit dipanggil
+    socket.emit('GANTI_SHIFT', { shift: shiftName });
+    
+    alert("Perintah dikirim: Pindah ke " + shiftName);
+    tutupSidebar();
+}
+
+// 2. Fungsi Toggle Theme (Diletakkan di luar, tidak lagi bersarang)
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const targetTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', targetTheme);
+    
+    const themeText = document.getElementById('sidebarThemeText');
+    if(themeText) {
+        themeText.innerText = targetTheme === 'light' ? '🌙 Switch Dark Mode' : '☀️ Switch Light Mode';
+    }
+    tutupSidebar();
+}
     function logoutSistem() { localStorage.clear(); window.location.href = 'login.html'; }
     function clearDataMonitor() {
         tutupSidebar();
@@ -170,7 +286,6 @@
         else { document.getElementById('pageRiwayat').classList.add('active'); document.getElementById('btnTabRiwayat').classList.add('active'); }
     }
 
-    // 🎯 MASTER AUDIO ALARM CONTROL
     function alarmBunyi() {
         alarmMati();
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -183,7 +298,6 @@
     }
     function alarmMati() { if(alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; } }
 
-    // 🎯 PENJINAK ALARM MATI MUTLAK SAAT BANNER DI-CLOSE / DI-SUBMIT
     window.tutupPopupManual = function() { 
         document.getElementById('popupOverlay').classList.remove('show'); 
         alarmMati();
@@ -200,7 +314,6 @@
     function kirimTroliKeLift(id) { window.tutupPopupManual(); fetch('https://dhs-paragoncorp.up.railway.app/api/request/kirim-troli', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id }) }); }
     function selesaikanTugas(id) { window.tutupPopupManual(); fetch('https://dhs-paragoncorp.up.railway.app/api/request/selesai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: id }) }); }
 
-    // 📣 LISTENER TUNGGAL ANTREAN MASUK (WHATSAPP BANNER ENGINE)
     socket.on('ANTREAN_BARU_MASUK', (data) => {
         activePopupId = data.id; 
         const pb = document.getElementById('pBox'); 
@@ -230,7 +343,6 @@
         popupTimeout = setTimeout(() => { window.tutupPopupManual(); }, 30000);
     });
 
-    // 📊 SINKRONISASI LIST DATA ANTREAN TABLET KFG
     socket.on('DATA_ANTREAN_UPDATE', (data) => {
         const boxTroli = document.getElementById('listTroli'); const boxFG = document.getElementById('listFG');
         document.getElementById('badgeCountTroli').innerText = data.troli.length; document.getElementById('badgeCountFG').innerText = data.fg.length;
@@ -259,6 +371,13 @@
             boxFG.appendChild(div);
         });
     });
+    
+    socket.on('connect', () => {
+    console.log("✅ Terhubung ke Server Railway! ID:", socket.id);
+});
+socket.on('connect_error', (err) => {
+    console.error("❌ Gagal terhubung:", err.message);
+});
 </script>
 </body>
 </html>

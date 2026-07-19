@@ -269,8 +269,11 @@
                     }
                 }
                 
-                if(item.jenisMedia === 'FG_FULL' && item.status === 'WAITING') { txtStatus = 'WAIT KFG'; }
-
+                if(item.jenisMedia === 'FG_FULL') {
+                tombolHtml = `<button class="btn-confirm-terima" onclick="window.eksekusiTerimaFisik('${item.id}', '${media.text}')">${icons.check} Confirm Terima</button>`;
+                // Jika masih menunggu, tampilkan label WAIT KFG
+                if(item.status === 'WAITING') { txtStatus = 'WAIT KFG'; }
+            }
                 boxAktif.innerHTML += `
                     <div class="log-item">
                         <div class="log-left">${media.icon} <span>${media.text}</span></div>
