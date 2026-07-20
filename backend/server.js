@@ -62,6 +62,36 @@ let antreanFG = [];
 let historyLog = [];   
 let currentShift = 'SHIFT 1';
 
+const lineLnt1 = ['STP 01','LIP 16','BTP 03','LIP 09','VSN 05','VMN 06','BRP 04','VMN 05','VSN 03','BRP 02','VAM 03','BRP 01'];
+const lineLnt2 = ['EMP 16','LIP 11','BTP 04','LIP 10','JRP 02','FOP 03','BTP 01','BTP 02','LIP 18','VAM 02','SBP 01','VMN 04','LIP 09','LIP 06','LIP 08','ALP 03','LIP 12'];
+
+function resolveLineLantai(line) {
+    if (!line) return 1;
+    const normalized = String(line).trim().toUpperCase();
+    if (lineLnt1.includes(normalized)) return 1;
+    if (lineLnt2.includes(normalized)) return 2;
+    return 1;
+}
+
+function completeRequestById(id) {
+    let dataSelesai = null;
+    const indexTroli = antreanTroli.findIndex(item => item.id === id);
+    if (indexTroli !== -1) dataSelesai = antreanTroli.splice(indexTroli, 1)[0];
+
+    const indexFG = antreanFG.findIndex(item => item.id === id);
+    if (!dataSelesai && indexFG !== -1) dataSelesai = antreanFG.splice(indexFG, 1)[0];
+
+    if (!dataSelesai) return null;
+
+    dataSelesai.status = 'COMPLETED';
+    dataSelesai.waktuSelesai = new Date().toLocaleTimeString('id-ID') + ' WIB';
+    historyLog.push(dataSelesai);
+    io.emit('ANTREAN_SELESAI_SYNC', id);
+    broadcastDataAwal();
+    io.emit('HISTORY_UPDATE', historyLog);
+    return dataSelesai;
+}
+
 // API Login
 app.post('/api/auth/login', (req, res) => {
     const { username, password } = req.body;
@@ -93,19 +123,20 @@ app.post('/api/request/reset-all', (req, res) => {
 
 // API Request Baru
 app.post('/api/request/baru', (req, res) => {
-    const { line, lantai, jenisMedia } = req.body;
-    
+    const { line, lantai, jenisMedia, status } = req.body;
+    const normalizedLine = String(line || '').trim().toUpperCase();
+    const normalizedMedia = jenisMedia || 'TROLI_KECIL';
     const dataBaru = {
         id: Math.random().toString(36).substr(2, 9),
-        line: line,
-        lantai: lantai,
-        jenisMedia: jenisMedia,
+        line: normalizedLine,
+        lantai: typeof lantai === 'number' ? lantai : resolveLineLantai(line),
+        jenisMedia: normalizedMedia,
         waktu: new Date().toLocaleTimeString('id-ID') + ' WIB',
         waktuEpoch: Date.now(),
-        status: 'WAITING'
+        status: status || 'WAITING'
     };
     
-    if (jenisMedia === 'FG_FULL') {
+    if (normalizedMedia === 'FG_FULL') {
         antreanFG.push(dataBaru);
     } else {
         antreanTroli.push(dataBaru);
@@ -115,6 +146,10 @@ app.post('/api/request/baru', (req, res) => {
     broadcastDataAwal();
     
     return res.status(201).json({ success: true, data: dataBaru });
+});
+
+app.get('/api/request/baru', (req, res) => {
+    return res.json({ success: true, data: { troli: antreanTroli, fg: antreanFG } });
 });
 
 // API Kirim Troli ke Lift
@@ -160,20 +195,42 @@ function broadcastDataAwal() {
 io.on('connection', (socket) => {
     socket.emit('DATA_ANTREAN_UPDATE', { troli: antreanTroli, fg: antreanFG });
     socket.emit('HISTORY_UPDATE', historyLog);
-});
 
-// Di server.js
-io.on('connection', (socket) => {
-    // ... event lainnya
+    socket.on('GANTI_SHIFT', (data) => {
+        console.log("Server menerima perintah ganti shift ke:", data.shift);
+        currentShift = data.shift;
+        io.emit('GANTI_SHIFT', data);
+    });
 
-    // Di sisi Server (Node.js)
-socket.on('GANTI_SHIFT', (data) => {
-    console.log("Server menerima perintah ganti shift ke:", data.shift);
-    currentShift = data.shift; // Simpan nilai shift di server
-    
-    // Broadcast ke SEMUA client
-    io.emit('GANTI_SHIFT', data);
-});  
+    socket.on('QC_RELEASE_LINE', (payload) => {
+        const { line, status = 'WAIT_KFG' } = payload || {};
+        if (!line) return;
+        const normalizedMedia = 'FG_FULL';
+        const dataBaru = {
+            id: Math.random().toString(36).substr(2, 9),
+            line: String(line).trim().toUpperCase(),
+            lantai: resolveLineLantai(line),
+            jenisMedia: normalizedMedia,
+            waktu: new Date().toLocaleTimeString('id-ID') + ' WIB',
+            waktuEpoch: Date.now(),
+            status: status
+        };
+        antreanFG.push(dataBaru);
+        io.emit('ANTREAN_BARU_MASUK', dataBaru);
+        broadcastDataAwal();
+        console.log(`QC_RELEASE_LINE diterima untuk line ${dataBaru.line} (${dataBaru.jenisMedia})`);
+    });
+
+    socket.on('KFG_SELESAI_TARIK', ({ id }) => {
+        if (!id) return;
+        const completed = completeRequestById(id);
+        if (completed) {
+            socket.emit('KFG_SELESAI_ACK', { id, success: true });
+            console.log(`KFG_SELESAI_TARIK diterima dan diselesaikan: ${id}`);
+        } else {
+            socket.emit('KFG_SELESAI_ACK', { id, success: false });
+        }
+    });
 });
 
 // Tambahkan endpoint agar saat TV refresh, dia tahu shift apa yang aktif sekarang
