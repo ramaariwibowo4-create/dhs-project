@@ -235,7 +235,7 @@
         });
     }
 
-    setInterval(() => { fetch(`${API_BASE}/api/request/baru`, { method: 'GET' }).catch(() => {}); }, 5000);
+    setInterval(() => { fetch(`${API_BASE}/api/request/status`, { method: 'GET' }).catch(() => {}); }, 5000);
 
     const scriptIo = document.createElement('script');
     scriptIo.src = `${API_BASE}/socket.io/socket.io.js`;
