@@ -146,6 +146,16 @@
     </div>
 </div>
 
+<!-- Popup Notifikasi untuk Tab Peminta -->
+<div id="notifPopup" style="display:none; position:fixed; left:50%; top:20%; transform:translateX(-50%); background:rgba(255,255,255,0.98); border:2px solid #0f172a; padding:18px; border-radius:12px; z-index:2000; box-shadow:0 8px 30px rgba(0,0,0,0.3); width:320px; text-align:center;">
+    <div style="font-weight:900; font-size:18px; margin-bottom:6px;">Troli Sudah Di Lift!</div>
+    <div id="notifPopupText" style="color:#334155; margin-bottom:12px;">Silakan terima fisik di lift.</div>
+    <div style="display:flex; gap:8px; justify-content:center;">
+        <button id="notifAcknow" style="background:#10b981;color:#fff;border:none;padding:8px 12px;border-radius:8px;font-weight:800;">Terima</button>
+        <button id="notifSnooze" style="background:#f59e0b;color:#fff;border:none;padding:8px 12px;border-radius:8px;font-weight:800;">Tunda</button>
+    </div>
+</div>
+
 <script>
     const sessionUser = JSON.parse(localStorage.getItem('dhs_user'));
     if (!sessionUser) { window.location.href = 'login.html'; }
@@ -189,6 +199,10 @@
             alert("❌ Request Ditolak! Masih ada antrean TROLI yang aktif / berjalan.");
             return;
         }
+        // Simpan marker pending di localStorage agar notifikasi muncul hanya di tab peminta
+        const pending = { jenisMedia: jenis, line: sessionUser.line, lantai: sessionUser.lantai, createdAt: Date.now() };
+        localStorage.setItem(`dhs_pending_${sessionUser.username}`, JSON.stringify(pending));
+
         fetch(`${API_BASE}/api/request/baru`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -206,6 +220,8 @@
         .then(resData => {
             if(resData.success) {
                 tambahKeRiwayatLokal({ jenisMedia: textLabel.toUpperCase().replace(' ', '_') });
+                // Clear pending notification if this tab had one
+                try { localStorage.removeItem(`dhs_pending_${sessionUser.username}`); stopAlarm(); closeNotifPopup(); } catch(_){}
             }
         }).catch(() => {});
     }
@@ -289,6 +305,21 @@
             });
         });
 
+        // Notifikasi lokal: tampilkan popup + bunyi alarm hanya untuk tab yang membuat request
+        socket.on('DATA_ANTREAN_UPDATE', (data) => {
+            try {
+                const pendingRaw = localStorage.getItem(`dhs_pending_${sessionUser.username}`);
+                if(!pendingRaw) return;
+                const pending = JSON.parse(pendingRaw);
+                const gabung = [...data.troli, ...data.fg];
+                // Cari item yang cocok untuk line/lantai/jenisMedia dan sudah DI LIFT (DELIVERED)
+                const matched = gabung.find(it => it.line === pending.line && it.lantai === pending.lantai && it.jenisMedia === pending.jenisMedia && it.status === 'DELIVERED');
+                if(matched) {
+                    showNotifPopup(`${getMediaLabel(matched.jenisMedia).text} sudah di lift. Terima fisik sekarang.`, matched.id);
+                }
+            } catch (e) { console.error(e); }
+        });
+
         socket.on('FORCE_RESET_SCREEN', () => {
             adakahTroliAktif = false;
             document.getElementById('boxRequestAktif').innerHTML = `<div class="empty-log">🟢 Jalur Aman. Tidak ada request menggantung.</div>`;
@@ -296,6 +327,71 @@
     };
     document.head.appendChild(scriptIo);
     renderRiwayatLokal();
+    
+    // --- Notification and Alarm helpers ---
+    let alarmOsc = null, alarmCtx = null;
+    function playAlarm() {
+        try {
+            if(alarmOsc) return;
+            alarmCtx = new (window.AudioContext || window.webkitAudioContext)();
+            alarmOsc = alarmCtx.createOscillator();
+            const gain = alarmCtx.createGain();
+            alarmOsc.type = 'sine';
+            alarmOsc.frequency.setValueAtTime(880, alarmCtx.currentTime);
+            gain.gain.setValueAtTime(0.0001, alarmCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.2, alarmCtx.currentTime + 0.05);
+            alarmOsc.connect(gain); gain.connect(alarmCtx.destination);
+            alarmOsc.start();
+            // pulsing effect
+            alarmOsc._pulse = setInterval(() => {
+                gain.gain.cancelScheduledValues(alarmCtx.currentTime);
+                gain.gain.setValueAtTime(0.0001, alarmCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.2, alarmCtx.currentTime + 0.05);
+                setTimeout(() => { gain.gain.exponentialRampToValueAtTime(0.0001, alarmCtx.currentTime + 0.6); }, 500);
+            }, 800);
+            // Auto-stop after 10 seconds
+            alarmOsc._autoStop = setTimeout(() => { stopAlarm(); }, 10000);
+        } catch (e) { console.error('Alarm error', e); }
+    }
+    function stopAlarm() {
+        try {
+            if(!alarmOsc) return;
+            clearInterval(alarmOsc._pulse);
+            if(alarmOsc._autoStop) { clearTimeout(alarmOsc._autoStop); alarmOsc._autoStop = null; }
+            alarmOsc.stop();
+            alarmOsc.disconnect();
+            alarmOsc = null;
+            if(alarmCtx && typeof alarmCtx.close === 'function') alarmCtx.close();
+            alarmCtx = null;
+        } catch(_){}
+    }
+
+    function showNotifPopup(message, requestId) {
+        const popup = document.getElementById('notifPopup');
+        const txt = document.getElementById('notifPopupText');
+        if(!popup || !txt) return;
+        txt.innerText = message || 'Troli sudah di lift.';
+        popup.style.display = 'block';
+        playAlarm();
+        // Setup buttons
+        document.getElementById('notifAcknow').onclick = () => {
+            // ketika user klik terima, panggil endpoint selesai untuk requestId
+            if(requestId) window.eksekusiTerimaFisik(requestId, 'Troli');
+            closeNotifPopup();
+            try { localStorage.removeItem(`dhs_pending_${sessionUser.username}`); } catch(_){}
+        };
+        document.getElementById('notifSnooze').onclick = () => {
+            // tunda: hentikan suara selama 10 detik lalu mainkan lagi
+            stopAlarm();
+            setTimeout(() => { playAlarm(); }, 10000);
+        };
+    }
+
+    function closeNotifPopup() {
+        const popup = document.getElementById('notifPopup');
+        if(popup) popup.style.display = 'none';
+        stopAlarm();
+    }
 </script>
 </body>
 </html>
