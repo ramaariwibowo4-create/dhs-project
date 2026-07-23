@@ -339,8 +339,49 @@ body.board-2-active .stats-two-rows {
     const API_BASE = DASHBOARD_KFG_API_BASE;
     const socket = io(API_BASE);
     const activeTimers = {};
-    let audioCtx = null, alarmInterval = null, popupTimeout = null;
+    let audioCtx = null, alarmInterval = null, alarmTimeout = null, popupTimeout = null;
+    let audioUnlocked = false;
     let riwayatDataLokal = [];
+
+    function showAudioUnlockHint() {
+        const hint = document.getElementById('audioUnlockHint');
+        if (hint) hint.style.display = 'flex';
+    }
+
+    function hideAudioUnlockHint() {
+        const hint = document.getElementById('audioUnlockHint');
+        if (hint) hint.style.display = 'none';
+    }
+
+    function unlockAudio() {
+        if (!audioUnlocked) {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().then(() => { audioUnlocked = true; hideAudioUnlockHint(); console.log('Dashboard audio unlocked'); }).catch(() => { console.warn('Gagal membuka AudioContext'); showAudioUnlockHint(); });
+            } else {
+                audioUnlocked = true;
+                hideAudioUnlockHint();
+            }
+        }
+    }
+
+    window.addEventListener('pointerdown', unlockAudio, { once: true });
+    window.addEventListener('mousedown', unlockAudio, { once: true });
+    window.addEventListener('click', unlockAudio, { once: true });
+    window.addEventListener('touchstart', unlockAudio, { once: true });
+    window.addEventListener('touchend', unlockAudio, { once: true });
+    window.addEventListener('keydown', unlockAudio, { once: true });
+    window.addEventListener('mousemove', unlockAudio, { once: true });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') {
+            showAudioUnlockHint();
+            console.warn('Dashboard audio locked: but can be unlocked with gesture.');
+        } else {
+            hideAudioUnlockHint();
+        }
+    });
 
     socket.on('DASHBOARD_UPDATE', (data) => {
     console.log("Data OMG diterima:", data.omg); // Cek ini di Console F12
@@ -462,7 +503,7 @@ body.board-2-active .stats-two-rows {
 
     const svgAssets = {
         troli_besar: `<svg viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M3 3h2l.4 2M5.4 5h15.4l-1.5 9H6.1L4.3 4H3"/><circle cx="9" cy="20" r="1" fill="#3b82f6"/><circle cx="18" cy="20" r="1" fill="#3b82f6"/></svg>`,
-        troli_kecil: `<svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M3 3h2l.4 2M5.4 5h15.4l-1.5 9H6.1L4.3 4H3"/><circle cx="9" cy="20" r="1" fill="#10b981"/><circle cx="18" cy="20" r="1" fill="#10b981"/></svg>`,
+        troli_kecil: `<svg viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><rect x="4" y="4" width="16" height="4" rx="1"/><rect x="4" y="10" width="16" height="4" rx="1"/><rect x="4" y="16" width="16" height="4" rx="1"/></svg>`,
         fg_full: `<svg viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`
     };
 
@@ -565,20 +606,25 @@ function activateDot(index) {
     }
 
     function alarmBunyi() {
+        unlockAudio();
         alarmMati();
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume().catch(() => console.warn('Gagal resume audio'));
+        }
         alarmInterval = setInterval(() => {
             let osc = audioCtx.createOscillator(); let g = audioCtx.createGain();
-            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(550, audioCtx.currentTime);
-            g.gain.setValueAtTime(0.12, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-            osc.connect(g); g.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.5);
+            osc.type = 'sawtooth'; osc.frequency.setValueAtTime(580, audioCtx.currentTime);
+            g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.connect(g); g.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.4);
         }, 600);
+        if (alarmTimeout) clearTimeout(alarmTimeout);
+        alarmTimeout = setTimeout(() => { alarmMati(); alarmTimeout = null; }, 20000);
     }
-    function alarmMati() { if(alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; } }
-
+    function alarmMati() { if(alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; } if (alarmTimeout) { clearTimeout(alarmTimeout); alarmTimeout = null; } }
     function getMediaLabel(jenis) {
         if(jenis === 'TROLI_BESAR') return { text: 'Troli Besar', key: 'troli_besar', emoji: '📦', color: '#3b82f6' };
-        if(jenis === 'TROLI_KECIL') return { text: 'Troli Kecil', key: 'troli_kecil', emoji: '🛒', color: '#10b981' };
+        if(jenis === 'TROLI_KECIL') return { text: 'Pallet Kayu', key: 'troli_kecil', emoji: '🛒', color: '#10b981' };
         return { text: 'Kirim FG Full', key: 'fg_full', emoji: '🚨', color: '#f59e0b' };
     }
 
@@ -598,9 +644,10 @@ function activateDot(index) {
         document.getElementById('popFloorText').innerText = `Zona Operasional: Lantai ${data.lantai}`;
         document.getElementById('popMedia').innerText = info.text;
         document.getElementById('popupOverlay').classList.add('show');
+        if (!audioUnlocked && audioCtx && audioCtx.state === 'suspended') showAudioUnlockHint();
         alarmBunyi();
         if (popupTimeout) clearTimeout(popupTimeout);
-        popupTimeout = setTimeout(() => { window.tutupPopupManual(); }, 10000); 
+        popupTimeout = setTimeout(() => { window.tutupPopupManual(); }, 20000); 
     });
     
     socket.on('DATA_ANTREAN_UPDATE', (data) => {

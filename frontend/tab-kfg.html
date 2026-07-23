@@ -204,7 +204,7 @@
 
 <script>
     
-    let activePopupId = null, popupTimeout = null, audioCtx = null, alarmInterval = null;
+    let activePopupId = null, popupTimeout = null, audioCtx = null, alarmInterval = null, alarmTimeout = null, audioUnlocked = false;
 
     const svgIcons = {
         box: `<svg viewBox="0 0 24 24"><path d="M12 21.35l-8-4.63V7.28l8 4.63v9.44zm1-9.44l8-4.63v9.44l-8 4.63v-9.44zM12 2.65l7.65 4.42L12 11.49 4.35 7.07 12 2.65z"/></svg>`,
@@ -291,17 +291,34 @@ function toggleTheme() {
         else { document.getElementById('pageRiwayat').classList.add('active'); document.getElementById('btnTabRiwayat').classList.add('active'); }
     }
 
+    function unlockAudio() {
+        if (!audioUnlocked) {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().then(() => { audioUnlocked = true; console.log('Audio unlocked'); }).catch(() => { console.warn('Gagal membuka AudioContext'); });
+            } else {
+                audioUnlocked = true;
+            }
+        }
+    }
+
     function alarmBunyi() {
+        unlockAudio();
         alarmMati();
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume().catch(() => console.warn('Gagal resume audio'));
+        }
         alarmInterval = setInterval(() => {
             let osc = audioCtx.createOscillator(); let g = audioCtx.createGain();
             osc.type = 'sawtooth'; osc.frequency.setValueAtTime(580, audioCtx.currentTime);
             g.gain.setValueAtTime(0.1, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
             osc.connect(g); g.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.4);
         }, 600);
+        if (alarmTimeout) clearTimeout(alarmTimeout);
+        alarmTimeout = setTimeout(() => { alarmMati(); alarmTimeout = null; }, 20000);
     }
-    function alarmMati() { if(alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; } }
+    function alarmMati() { if(alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; } if (alarmTimeout) { clearTimeout(alarmTimeout); alarmTimeout = null; } }
 
     const API_BASE = (window.location.protocol === 'file:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
         ? 'http://localhost:3000'
@@ -317,7 +334,7 @@ function toggleTheme() {
 
     function getMediaVisual(jenis) {
         if(jenis === 'TROLI_BESAR') return { svg: svgIcons.trolley, text: 'TROLI BESAR' };
-        if(jenis === 'TROLI_KECIL') return { svg: svgIcons.trolley, text: 'TROLI KECIL' };
+        if(jenis === 'TROLI_KECIL') return { svg: svgIcons.pallet, text: 'Pallet Kayu' };
         return { svg: svgIcons.box, text: 'TARIK FG FULL' };
     }
 
@@ -359,8 +376,13 @@ function toggleTheme() {
 
         boxTroli.innerHTML = data.troli.length === 0 ? `<div class="empty">🟢 Bersih, tidak ada request pasokan troli.</div>` : '';
         data.troli.forEach(item => {
+            // Ambil visual dengan pengaman teks default
             const visual = getMediaVisual(item.jenisMedia);
-            const div = document.createElement('div'); div.className = 'action-card';
+            const svgCode = visual.svg || svgIcons.trolley; // Fallback icon jika kosong
+            const lineName = item.line || 'LINE';
+            
+            const div = document.createElement('div'); 
+            div.className = 'action-card';
             
             let htmlKanan = '';
             if (item.lantai == 1) {
@@ -369,7 +391,15 @@ function toggleTheme() {
                 htmlKanan = item.status === 'DELIVERED' ? `<span class="lbl-status-delivered">DI LIFT 🛫</span>` : `<button class="btn-action btn-blue" onclick="kirimTroliKeLift('${item.id}')">KIRIM KE LIFT</button>`;
             }
             
-            div.innerHTML = `<div class="card-left"><div class="mini-img-icon" style="color:#3b82f6;">${visual.svg}</div><div><h4>${item.line} <span style="font-size:11px; color:#38bdf8;">(Lant. ${item.lantai})</span></h4><p class="media-lbl">${visual.text}</p></div></div><div>${htmlKanan}</div>`;
+            div.innerHTML = `
+                <div class="card-left">
+                    <div class="mini-img-icon" style="color:#3b82f6;">${svgCode}</div>
+                    <div>
+                        <h4>${lineName} <span style="font-size:11px; color:#38bdf8;">(Lant. ${item.lantai})</span></h4>
+                        <p class="media-lbl">${visual.text || 'TROLI BESAR'}</p>
+                    </div>
+                </div>
+                <div>${htmlKanan}</div>`;
             boxTroli.appendChild(div);
         });
 
