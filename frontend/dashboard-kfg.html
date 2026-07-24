@@ -27,9 +27,40 @@
             --card-bg: #ffffff; --card-border: #cbd5e1;
             --nav-bg: #ffffff; --sidebar-bg: #ffffff;
         }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg-body); color: var(--text-main); margin: 0; padding: 20px 20px 95px 20px; min-height: 100vh; transition: 0.3s; box-sizing: border-box; overflow-x: hidden; }
-        .monitor-container { width: 100%; max-width: 1450px; margin: 0 auto; background: var(--bg-container); backdrop-filter: blur(20px); border-radius: 24px; border: 1px solid var(--border); padding: 20px; box-shadow: 0 30px 70px rgba(0,0,0,0.4); }
-        
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: var(--bg-body); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 10px 15px; 
+            height: 100vh; 
+            box-sizing: border-box; 
+            overflow: hidden; 
+        }
+        .monitor-container { 
+            width: 100%; 
+            height: 100%; 
+            max-width: none; 
+            margin: 0 auto; 
+            background: var(--bg-container); 
+            backdrop-filter: blur(20px); 
+            border-radius: 16px; 
+            border: 1px solid var(--border); 
+            padding: 15px 20px; 
+            box-sizing: border-box; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.4); 
+        }
+        .slider-container { 
+            display: flex; 
+            width: 100%; 
+            flex-grow: 1;
+            overflow-x: hidden; 
+            scroll-snap-type: x mandatory; 
+            scroll-behavior: smooth; 
+        }
         /* HEADER */
         .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 20px; }
         .header-title-area { display: flex; align-items: center; gap: 15px; }
@@ -84,14 +115,14 @@
         .btn-tv-done:hover { background: #059669; }
         .empty-state { text-align: center; grid-column: 1 / -1; padding: 30px 0; color: #64748b; font-size: 13px; font-weight: 700; border: 2px dashed rgba(255,255,255,0.05); border-radius: 14px; width: 100%; }
 
-        .tabel-omg { width: 100%; border-collapse: collapse; margin-bottom: 8px; background: white; border-radius: 16px; overflow: hidden; color: #0f172a; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .tabel-omg th { background-color: #1e293b; color: white; padding: 6px; font-size: 13px; }
+        /* TABEL OMG DI ATAS */
+        .tabel-omg { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; color: #0f172a; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 12px; }
+        .tabel-omg th { background-color: #1e293b; color: white; padding: 5px; font-size: 12px; }
         .tabel-omg td { padding: 4px; border: 1px solid #cbd5e1; text-align: center; font-weight: 600; }
 
-        /* HISTORY TABLE DENGAN KOLOM SAMPING-SAMPINGAN (IN/OUT) */
-        .history-table { width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; border-radius: 16px; overflow: hidden; font-size: 11px; }
-        .history-table th { background-color: #0f4c5c; color: white; padding: 8px 4px; font-size: 11px; letter-spacing: 0.5px; border: 1px solid #135d70; }
-        
+        /* HISTORY TABLE / TABEL RITASE UTAMA */
+        .history-table { width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; border-radius: 12px; overflow: hidden; font-size: 11px; }
+        .history-table th { background-color: #0f4c5c; color: white; padding: 6px 4px; font-size: 11px; letter-spacing: 0.5px; border: 1px solid #135d70; }        
         /* Lebar proporsional untuk 9 kolom (RIT, Jam, J4(In/Out), J3(In/Out), J6(In/Out), OR) */
         .history-table th:nth-child(1) { width: 5%; }  /* RIT */
         .history-table th:nth-child(2) { width: 15%; } /* JAM */
@@ -103,12 +134,23 @@
         .history-table th:nth-child(8) { width: 11%; } /* J6 Out */
         .history-table th:nth-child(9) { width: 9%; }  /* OR */
 
-        .history-table td { padding: 4px 2px; border: 1px solid #cbd5e1; font-size: 11px; }
+        /* Lebar proporsional kolom tabel ritase */
+        .history-table th:nth-child(1) { width: 5%; }  /* RIT */
+        .history-table th:nth-child(2) { width: 14%; } /* JAM */
+        .history-table th:nth-child(3) { width: 11%; } /* J4 In */
+        .history-table th:nth-child(4) { width: 11%; } /* J4 Out */
+        .history-table th:nth-child(5) { width: 11%; } /* J3 In */
+        .history-table th:nth-child(6) { width: 11%; } /* J3 Out */
+        .history-table th:nth-child(7) { width: 11%; } /* J6 In */
+        .history-table th:nth-child(8) { width: 11%; } /* J6 Out */
+        .history-table th:nth-child(9) { width: 9%; }  /* OR */
 
-        .slider-container { display: flex; width: 100%; min-height: calc(100vh - 240px); overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth; }
-        .board { min-width: 100%; width: 100%; scroll-snap-align: start; padding: 20px 0; box-sizing: border-box; }
-        .board-inner { width: min(1350px, calc(100% - 40px)); margin: 0 auto; display: grid; gap: 20px; }
-        .board h2 { margin: 0 0 16px 0; font-size: 22px; }
+        .history-table td { padding: 3px 2px; border: 1px solid #cbd5e1; font-size: 11px; }
+
+        .slider-container { display: flex; width: 100%; flex-grow: 1; overflow-x: hidden; scroll-snap-type: x mandatory; scroll-behavior: smooth; align-items: center; }
+        .board { min-width: 100%; width: 100%; scroll-snap-align: start; box-sizing: border-box; }
+        .board-inner { width: 100%; margin: 0 auto; display: grid; gap: 8px; box-sizing: border-box; padding: 0 5px; }
+        .board h2 { margin: 0 0 8px 0; font-size: 18px; }
         .dots { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; z-index: 100; }
         .dot { width: 10px; height: 10px; background: rgba(148,163,184,0.35); border-radius: 50%; cursor: pointer; transition: background 0.2s ease; }
         .dot.active { background: #38bdf8; }
@@ -275,8 +317,38 @@
         <div class="dot" data-index="1"></div>
         <div class="dot" data-index="2"></div>
     </div>
+</div>
 
 <script>
+    // 1. Script untuk Fullscreen pada klik pertama
+    document.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => {});
+        }
+    }, { once: true });
+
+    // 2. Script agar layar TV / Monitor tidak meredup atau sleep (Wake Lock API)
+    async function keepScreenAwake() {
+        if ('wakeLock' in navigator) {
+            try {
+                let wakeLock = await navigator.wakeLock.request('screen');
+                console.log('💡 Layar TV dikunci agar menyala terus.');
+                
+                // Jika halaman kembali aktif dari tab lain, minta ulang izin Wake Lock
+                document.addEventListener('visibilitychange', async () => {
+                    if (wakeLock !== null && document.visibilityState === 'visible') {
+                        wakeLock = await navigator.wakeLock.request('screen');
+                    }
+                });
+            } catch (err) {
+                console.error(`Gagal mengaktifkan Wake Lock: ${err.name}, ${err.message}`);
+            }
+        }
+    }
+    
+    // Jalankan fungsi agar layar TV menyala terus
+    keepScreenAwake();
+
     window.addEventListener('error', function(e){
         try {
             const b = document.getElementById('jsErrorBanner');
@@ -375,7 +447,6 @@
             const orIn = item.orIn || item.or || 'In J4';
             const orOut = item.orOut || 'Out J4';
 
-            // Masing-masing RIT dijamin tepat 1 baris horizontal penuh yang rapi sejajar dengan header
             tbody.innerHTML += `
                 <tr style="background-color: ${bgRit}; color: #0f172a; text-align: center;">
                     <td style="border: 1px solid #cbd5e1; font-weight: 900; vertical-align: middle;">${item.rit}</td>
@@ -393,7 +464,7 @@
                     <td style="border: 1px solid #cbd5e1; vertical-align: middle; padding: 6px 2px;">${getCellHtml(item.targetInJ6, valInJ6, item.realInJ6, item.jam, shiftNum)}</td>
                     <td style="border: 1px solid #cbd5e1; vertical-align: middle; padding: 6px 2px;">${getCellHtml(item.targetOutJ6, valOutJ6, item.realOutJ6, item.jam, shiftNum)}</td>
 
-                    <!-- OR dengan In / Out berbaris vertikal kecil di dalam kolom OR -->
+                    <!-- OR -->
                     <td style="border: 1px solid #cbd5e1; font-weight: 800; vertical-align: middle; font-size: 10px; background: ${index % 2 === 0 ? '#f8fafc' : '#e2e8f0'}; padding: 0;">
                         <div style="padding: 4px 2px; border-bottom: 1px solid #cbd5e1;">${orIn}</div>
                         <div style="padding: 4px 2px;">${orOut}</div>
@@ -698,18 +769,16 @@
 
         let selisih = tTotalMenit - rTotalMenit;
 
-        // Sesuaikan koreksi 1 angka jika selisihnya meleset 1 digit
         if (selisih > 0) {
-            selisih -= 1; // Mengurangi 1 agar yang tadinya 2 menjadi 1, dst.
+            selisih -= 1; 
         } else if (selisih < 0) {
-            selisih += 1; // Penyesuaian untuk nilai minus jika diperlukan
+            selisih += 1; 
         }
 
         return selisih;
     }
 
     function getCellHtml(targetTime, val, realTime, itemJam, shiftNum) {
-        // Cek apakah berdasarkan waktu operasional hari ini rit ini sudah waktunya / ada
         const isValidTime = isTimePassedOrToday(itemJam, shiftNum);
 
         if (!isValidTime || !realTime || realTime === "-" || realTime === "" || realTime === "00:00") {
@@ -723,10 +792,10 @@
         let bg = "#334155";
 
         if (val > 0) {
-            bg = "#16a34a"; // Hijau (Lebih Cepat)
+            bg = "#16a34a"; 
             displayVal = val; 
         } else if (val < 0) {
-            bg = "#dc2626"; // Merah (Lebih Lambat)
+            bg = "#dc2626"; 
             displayVal = val; 
         }
 
@@ -737,30 +806,27 @@
             </div>
         `;
     }
+
     setInterval(updateTabelDariSpreadsheet, 60000);
     updateTabelDariSpreadsheet();
+
     function isTimePassedOrToday(itemJam, shiftNum) {
-        const now = new Date(); // Waktu saat ini: Jumat, 24 Jul 2026, 13:22
-        
-        // Geser jam sistem dikurangi 7 jam untuk menentukan "Hari Operasional Aktif" (reset jam 07:00 pagi)
-        // Contoh: Jam 01:00 dini hari tanggal 25 masih masuk hitungan operasional tanggal 24
+        const now = new Date(); 
         let operationalNow = new Date(now.getTime() - (7 * 60 * 60 * 1000));
         
-        // Ambil jam & menit target dari rentang jam di baris (misal "13:45 - 14:50" ambil jam mulainya "13:45")
         const startTimeStr = itemJam.split('-')[0].trim();
         const [targetHour, targetMinute] = startTimeStr.split(':').map(Number);
         
-        // Buat objek waktu target untuk hari operasional ini
         let targetDateTime = new Date(operationalNow);
         targetDateTime.setHours(targetHour, targetMinute, 0, 0);
         
-        // Jika waktu operasional saat ini masih sebelum jam target rit tersebut, maka anggap belum waktunya (tampilkan strip)
         if (now < targetDateTime) {
-            return false; // Belum waktunya / belum ada
+            return false; 
         }
         
-        return true; // Sudah waktunya / sudah lewat
+        return true; 
     }
+
     function cekPerluReset(waktu) {
         if (!waktu || waktu === "-") return true;
         const parts = waktu.split(' ');
