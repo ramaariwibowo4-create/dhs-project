@@ -115,25 +115,15 @@
         .btn-tv-done:hover { background: #059669; }
         .empty-state { text-align: center; grid-column: 1 / -1; padding: 30px 0; color: #64748b; font-size: 13px; font-weight: 700; border: 2px dashed rgba(255,255,255,0.05); border-radius: 14px; width: 100%; }
 
-        /* TABEL OMG DI ATAS */
-        .tabel-omg { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; color: #0f172a; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 12px; }
-        .tabel-omg th { background-color: #1e293b; color: white; padding: 5px; font-size: 12px; }
-        .tabel-omg td { padding: 4px; border: 1px solid #cbd5e1; text-align: center; font-weight: 600; }
+        /* TABEL OMG DI ATAS - Font dan padding diperbesar */
+        .tabel-omg { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; color: #0f172a; box-shadow: 0 4px 6px rgba(0,0,0,0.1); font-size: 14px; }
+        .tabel-omg th { background-color: #1e293b; color: white; padding: 8px; font-size: 14px; }
+        .tabel-omg td { padding: 8px; border: 1px solid #cbd5e1; text-align: center; font-weight: 700; }
 
-        /* HISTORY TABLE / TABEL RITASE UTAMA */
-        .history-table { width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; border-radius: 12px; overflow: hidden; font-size: 11px; }
-        .history-table th { background-color: #0f4c5c; color: white; padding: 6px 4px; font-size: 11px; letter-spacing: 0.5px; border: 1px solid #135d70; }        
-        /* Lebar proporsional untuk 9 kolom (RIT, Jam, J4(In/Out), J3(In/Out), J6(In/Out), OR) */
-        .history-table th:nth-child(1) { width: 5%; }  /* RIT */
-        .history-table th:nth-child(2) { width: 15%; } /* JAM */
-        .history-table th:nth-child(3) { width: 11%; } /* J4 In */
-        .history-table th:nth-child(4) { width: 11%; } /* J4 Out */
-        .history-table th:nth-child(5) { width: 11%; } /* J3 In */
-        .history-table th:nth-child(6) { width: 11%; } /* J3 Out */
-        .history-table th:nth-child(7) { width: 11%; } /* J6 In */
-        .history-table th:nth-child(8) { width: 11%; } /* J6 Out */
-        .history-table th:nth-child(9) { width: 9%; }  /* OR */
-
+        /* HISTORY TABLE / TABEL RITASE UTAMA - Font dan tinggi baris diperbesar */
+        .history-table { width: 100%; border-collapse: collapse; text-align: center; table-layout: fixed; border-radius: 12px; overflow: hidden; font-size: 13px; }
+        .history-table th { background-color: #0f4c5c; color: white; padding: 8px 4px; font-size: 13px; letter-spacing: 0.5px; border: 1px solid #135d70; }
+        
         /* Lebar proporsional kolom tabel ritase */
         .history-table th:nth-child(1) { width: 5%; }  /* RIT */
         .history-table th:nth-child(2) { width: 14%; } /* JAM */
@@ -145,8 +135,9 @@
         .history-table th:nth-child(8) { width: 11%; } /* J6 Out */
         .history-table th:nth-child(9) { width: 9%; }  /* OR */
 
-        .history-table td { padding: 3px 2px; border: 1px solid #cbd5e1; font-size: 11px; }
-
+        /* Memperbesar padding atas-bawah sel tabel ritase agar lebih padat dan pas */
+        .history-table td { padding: 7px 3px; border: 1px solid #cbd5e1; font-size: 13px; }
+        
         .slider-container { display: flex; width: 100%; flex-grow: 1; overflow-x: hidden; scroll-snap-type: x mandatory; scroll-behavior: smooth; align-items: center; }
         .board { min-width: 100%; width: 100%; scroll-snap-align: start; box-sizing: border-box; }
         .board-inner { width: 100%; margin: 0 auto; display: grid; gap: 8px; box-sizing: border-box; padding: 0 5px; }
